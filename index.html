@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shalom · Si fuera un animal</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 520px; margin: auto; padding: 20px; background: #fafafa; color: #222; }
+  h1 { font-size: 1.4rem; text-align: center; }
+  label { font-weight: 600; display: block; margin-top: 16px; }
+  select, textarea { width: 100%; font-size: 1rem; padding: 10px; margin-top: 6px; box-sizing: border-box; border: 1px solid #bbb; border-radius: 8px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 8px; }
+  .animal { font-size: 2.4rem; text-align: center; padding: 12px 0; border: 2px solid #ddd; border-radius: 12px; background: #fff; cursor: pointer; }
+  .animal.sel { border-color: #2563eb; background: #eff6ff; }
+  button { width: 100%; margin-top: 20px; padding: 12px; font-size: 1rem; font-weight: 600; background: #2563eb; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+  button:disabled { background: #999; }
+  #gracias { display: none; text-align: center; padding: 60px 0; }
+</style>
+</head>
+<body>
+
+<div id="form">
+  <h1>Si Shalom fuera un animal…</h1>
+
+  <label for="codigo">Tu código de participante</label>
+  <select id="codigo">
+    <option value="">Elige tu código</option>
+    <option>P01</option><option>P02</option><option>P03</option><option>P04</option>
+    <option>P05</option><option>P06</option><option>P07</option><option>P08</option>
+  </select>
+
+  <label>Elige el animal que mejor represente a Shalom</label>
+  <div class="grid" id="grid"></div>
+
+  <label for="justificacion">¿Qué te hizo elegir ese animal?</label>
+  <textarea id="justificacion" rows="4" placeholder="Escribe lo primero que se te venga a la mente"></textarea>
+
+  <button id="enviar">Enviar respuesta</button>
+</div>
+
+<div id="gracias">
+  <h1>¡Gracias!</h1>
+  <p>Tu respuesta fue registrada.</p>
+</div>
+
+<script>
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzlXdvZthYulmmsTEs61N97AT4IxSgVgELa35wdHiKUe2rd9K6WRqZ9D_rEBRegU3ad/exec';
+
+  const ANIMALES = [
+    { e: '🦁', n: 'León' },
+    { e: '🐢', n: 'Tortuga' },
+    { e: '🐆', n: 'Guepardo' },
+    { e: '🐘', n: 'Elefante' },
+    { e: '🦉', n: 'Búho' },
+    { e: '🐕', n: 'Perro' },
+    { e: '🐜', n: 'Hormiga' },
+    { e: '🦊', n: 'Zorro' }
+  ];
+
+  function mezclar(lista) {
+    const a = [...lista];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  let elegido = null;
+  const grid = document.getElementById('grid');
+
+  mezclar(ANIMALES).forEach(a => {
+    const d = document.createElement('div');
+    d.className = 'animal';
+    d.textContent = a.e;
+    d.title = a.n;
+    d.onclick = () => {
+      document.querySelectorAll('.animal').forEach(x => x.classList.remove('sel'));
+      d.classList.add('sel');
+      elegido = a;
+    };
+    grid.appendChild(d);
+  });
+
+  document.getElementById('enviar').onclick = async () => {
+    const codigo = document.getElementById('codigo').value;
+    const justificacion = document.getElementById('justificacion').value.trim();
+
+    if (!codigo || !elegido || !justificacion) {
+      alert('Completa tu código, elige un animal y escribe tu justificación.');
+      return;
+    }
+
+    const btn = document.getElementById('enviar');
+    btn.disabled = true;
+
+    const datos = {
+      codigo: codigo,
+      animal: elegido.n,
+      justificacion: justificacion,
+      hora: new Date().toLocaleString('es-PE', { timeZone: 'America/Lima' })
+    };
+
+    try {
+      await fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(datos)
+      });
+      document.getElementById('form').style.display = 'none';
+      document.getElementById('gracias').style.display = 'block';
+    } catch (err) {
+      alert('No se pudo enviar. Avisa a la observadora.');
+      btn.disabled = false;
+    }
+  };
+</script>
+</body>
+</html>
